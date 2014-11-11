@@ -14,6 +14,7 @@
     </style>
   </head>
   <body>
+    <div id="online"></div>
     <ul id="messages"></ul>
     <form action="">
       <input id="m" autocomplete="off" /><button>Send</button>
@@ -21,15 +22,51 @@
 <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        var socket = io();
- 	$('form').submit(function(){
-	    socket.emit('chat message', $('#m').val());
-	    $('#m').val('');
-	    return false;
-	});
-	socket.on('chat message', function(msg){
-	    $('#messages').append($('<li>').text(msg));
-	});
+    
+      var socket = io();
+      var id;
+
+     	$('form').submit(function(){
+          $('#messages').append($('<li>').text($('#m').val()).css({color : "green"}));
+    	    socket.emit('chat message', $('#m').val());
+    	    $('#m').val('');
+    	    return false;
+    	});
+
+      socket.on('id message', function(msg){
+        if(!id){
+          id = msg;
+        }
+      })
+
+    	socket.on('chat message', function(obj){
+          if(obj.id != id){
+            $('#messages').append($('<li>').text(obj.msg).css({color : "blue"}));
+          }
+    	});
+
+      socket.on('typing message', function(obj){
+          if(obj.id != id){
+            $('#messages').append($('<li>').text(obj.msg).css({color : "grey"}));
+          }
+      });
+
+      socket.on('action message', function(msg){
+          $('#messages').append($('<li>').text(msg).css({color : "red"}));
+      });
+
+      socket.on('online message', function(msg){
+        var text = "";
+        for(var key in msg){
+          text += key + "\n";
+        }
+        $('#online').text("Current online users : " + text);
+      });
+
+      $('input').on('keyup', function() {
+        socket.emit('typing message', null);
+      });
+
     </script>
   </body>
 </html>
